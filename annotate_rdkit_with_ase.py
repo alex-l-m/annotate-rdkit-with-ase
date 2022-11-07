@@ -1,3 +1,5 @@
+from random import choices
+from string import ascii_letters
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 from rdkit.Geometry.rdGeometry import Point3D
 from ase import Atoms
@@ -42,7 +44,10 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = 0):
     # Optimize the geometry
     mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index)
     mol_opt_ase.calc = ase_calculator
-    opt = BFGS(mol_opt_ase, trajectory='opt.traj', logfile='opt.log')
+    random_chars = "".join(choices(ascii_letters, k = 80))
+    opt = BFGS(mol_opt_ase,
+               trajectory=f"tmp_opt_{random_chars}.traj",
+               logfile=f"tmp_opt_{random_chars}.log")
     opt.run(fmax=0.05)
 
     # Set the optimized geometry as the conformer
