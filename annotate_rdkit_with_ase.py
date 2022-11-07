@@ -44,6 +44,8 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = 0):
     # Optimize the geometry
     mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index)
     mol_opt_ase.calc = ase_calculator
+    # Create a random sequence of characters for the temp files. This way, jobs
+    # running on different threads don't try to access the same file
     random_chars = "".join(choices(ascii_letters, k = 80))
     opt = BFGS(mol_opt_ase,
                trajectory=f"tmp_opt_{random_chars}.traj",
