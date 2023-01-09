@@ -69,3 +69,5 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None):
     
     else:
         raise ValueError("Failed to generate conformation")
+
+    return conformation_index
