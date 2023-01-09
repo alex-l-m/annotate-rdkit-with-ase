@@ -44,9 +44,11 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None):
         conformation_index = EmbedMolecule(mol_rdkit)
 
     if conformation_index != -1:
-        # Name of the trajectory file
+        # Create a random sequence of characters for the temp files. This way, jobs
+        # running on different threads don't try to access the same file
         noise = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
-        traj_filename = f"opt_{noise}.traj"
+        # Name of the trajectory file
+        traj_filename = f"tmp_opt_{noise}.traj"
 
         # Optimize the geometry
         mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index)
