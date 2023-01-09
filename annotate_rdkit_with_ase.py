@@ -1,3 +1,6 @@
+import os
+import string
+import random
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 from rdkit.Geometry.rdGeometry import Point3D
 from ase import Atoms
@@ -41,11 +44,16 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None):
         conformation_index = EmbedMolecule(mol_rdkit)
 
     if conformation_index != -1:
+        # Name of the trajectory file
+        noise = "".join(random.choices(string.ascii_uppercase + string.digits, k=20))
+        traj_filename = f"opt_{noise}.traj"
+
         # Optimize the geometry
         mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index)
         mol_opt_ase.calc = ase_calculator
-        opt = BFGS(mol_opt_ase, trajectory='opt.traj', logfile='opt.log')
+        opt = BFGS(mol_opt_ase, trajectory = traj_filename, logfile = None)
         opt.run(fmax=0.05)
+        os.remove(traj_filename)
 
         # Set the optimized geometry as the conformer
         positions = mol_opt_ase.get_positions()
