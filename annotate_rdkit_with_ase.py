@@ -6,12 +6,12 @@ from ase.optimize import BFGS
 def rdkit2ase(mol_rdkit, conformation_index):
     '''Convert an RDKit molecule to an ASE Atoms object'''
     elements = [atom.GetSymbol() for atom in mol_rdkit.GetAtoms()]
-    positions = mol_rdkit.GetConformer(0).GetPositions()
+    positions = mol_rdkit.GetConformer(conformation_index).GetPositions()
     mol_ase = Atoms(elements, positions)
     return mol_ase
 
-def annotate_molecule_property(property_function, ase_calculator, mol_rdkit,
-        property_name, conformation_index = 0):
+def annotate_molecule_property(property_name, property_function, ase_calculator, mol_rdkit,
+        conformation_index = 0):
     '''Given a property function (ASE to number), and an ASE calculator, and an
     RDKit molecule, calculate the property with the given calculator, and add
     it to the RDKit molecule as a molecule property, with the given name'''
@@ -20,8 +20,8 @@ def annotate_molecule_property(property_function, ase_calculator, mol_rdkit,
     property_value = property_function(ase_molecule)
     mol_rdkit.SetDoubleProp(property_name, property_value)
 
-def annotate_atom_property(property_function, ase_calculator, mol_rdkit,
-        property_name, conformation_index = 0):
+def annotate_atom_property(property_name, property_function, ase_calculator, mol_rdkit,
+        conformation_index = 0):
     '''Given an atom property function (ASE to iterable of numbers, one for
     each atom, in order), and an ASE calculator, and an RDKit molecule,
     annotate the RDKit molecule with the atom property'''
