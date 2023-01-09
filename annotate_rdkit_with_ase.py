@@ -31,27 +31,31 @@ def annotate_atom_property(property_name, property_function, ase_calculator, mol
     for atom, property_value in zip(mol_rdkit.GetAtoms(), property_values):
         atom.SetDoubleProp(property_name, property_value)
 
-def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = 0):
+def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None):
     '''Given an ASE calculator and an RDKit molecule, optimize the geometry
     using that calculator'''
     
-    # Generate initial conformer
-    mol_rdkit.RemoveAllConformers()
-    conformer = EmbedMolecule(mol_rdkit)
+    if conformation_index is None:
+        # Generate initial conformer
+        mol_rdkit.RemoveAllConformers()
+        conformation_index = EmbedMolecule(mol_rdkit)
 
-    # Optimize the geometry
-    mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index)
-    mol_opt_ase.calc = ase_calculator
-    opt = BFGS(mol_opt_ase, trajectory='opt.traj', logfile='opt.log')
-    opt.run(fmax=0.05)
+    if conformation_index != -1:
+        # Optimize the geometry
+        mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index)
+        mol_opt_ase.calc = ase_calculator
+        opt = BFGS(mol_opt_ase, trajectory='opt.traj', logfile='opt.log')
+        opt.run(fmax=0.05)
 
-    # Set the optimized geometry as the conformer
-    if conformer != -1:
+        # Set the optimized geometry as the conformer
         positions = mol_opt_ase.get_positions()
-        target_conformer = mol_rdkit.GetConformer(conformer)
+        target_conformer = mol_rdkit.GetConformer(conformation_index)
         for i, row in enumerate(positions):
             x = row[0]
             y = row[1]
             z = row[2]
             rdkit_point = Point3D(x, y, z)
             target_conformer.SetAtomPosition(i, rdkit_point)
+    
+    else:
+        raise ValueError("Failed to generate conformation")
