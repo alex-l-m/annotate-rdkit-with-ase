@@ -34,7 +34,7 @@ def annotate_atom_property(property_name, property_function, ase_calculator, mol
     for atom, property_value in zip(mol_rdkit.GetAtoms(), property_values):
         atom.SetDoubleProp(property_name, property_value)
 
-def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None):
+def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None, constraints = None):
     '''Given an ASE calculator and an RDKit molecule, optimize the geometry
     using that calculator'''
     
@@ -52,6 +52,9 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None):
 
         # Optimize the geometry
         mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index)
+        if constraints is not None:
+            for constraint in constraints:
+                mol_opt_ase.set_constraint(constraint)
         mol_opt_ase.calc = ase_calculator
         opt = BFGS(mol_opt_ase, trajectory = traj_filename, logfile = None)
         opt.run(fmax=0.05)
