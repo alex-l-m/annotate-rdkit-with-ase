@@ -1,40 +1,51 @@
 import os
 import string
 import random
+import numpy as np
 from rdkit.Chem.rdDistGeom import EmbedMolecule
 from rdkit.Geometry.rdGeometry import Point3D
 from ase import Atoms
 from ase.optimize import BFGS
 
-def rdkit2ase(mol_rdkit, conformation_index):
+def rdkit2ase(mol_rdkit, conformation_index, charge, uhf):
     '''Convert an RDKit molecule to an ASE Atoms object'''
     elements = [atom.GetSymbol() for atom in mol_rdkit.GetAtoms()]
     positions = mol_rdkit.GetConformer(conformation_index).GetPositions()
     mol_ase = Atoms(elements, positions)
+    # XTB uses total charge and total magnetic moment to decide charge and multiplicity
+    # Assign initial charges to have the right sum
+    dummy_charges = \
+            np.array([float(charge)] +
+                     [0.0 for i in range(mol_ase.get_global_number_of_atoms() - 1)])
+    mol_ase.set_initial_charges(dummy_charges)
+    dummy_moments = \
+            np.array([float(uhf)] +
+                     [0.0 for i in range(mol_ase.get_global_number_of_atoms() - 1)])
+    mol_ase.set_initial_magnetic_moments(dummy_moments)
     return mol_ase
 
 def annotate_molecule_property(property_name, property_function, ase_calculator, mol_rdkit,
-        conformation_index = 0):
+        conformation_index = 0, charge = 0, uhf = 0):
     '''Given a property function (ASE to number), and an ASE calculator, and an
     RDKit molecule, calculate the property with the given calculator, and add
     it to the RDKit molecule as a molecule property, with the given name'''
-    ase_molecule = rdkit2ase(mol_rdkit, conformation_index)
+    ase_molecule = rdkit2ase(mol_rdkit, conformation_index, charge, uhf)
     ase_molecule.calc = ase_calculator
     property_value = property_function(ase_molecule)
     mol_rdkit.SetDoubleProp(property_name, property_value)
 
 def annotate_atom_property(property_name, property_function, ase_calculator, mol_rdkit,
-        conformation_index = 0):
+        conformation_index = 0, charge = 0, uhf = 0):
     '''Given an atom property function (ASE to iterable of numbers, one for
     each atom, in order), and an ASE calculator, and an RDKit molecule,
     annotate the RDKit molecule with the atom property'''
-    ase_molecule = rdkit2ase(mol_rdkit, conformation_index)
+    ase_molecule = rdkit2ase(mol_rdkit, conformation_index, charge, uhf)
     ase_molecule.calc = ase_calculator
     property_values = property_function(ase_molecule)
     for atom, property_value in zip(mol_rdkit.GetAtoms(), property_values):
         atom.SetDoubleProp(property_name, property_value)
 
-def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None, constraints = None):
+def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None, constraints = None, charge = 0, uhf = 0):
     '''Given an ASE calculator and an RDKit molecule, optimize the geometry
     using that calculator'''
     
@@ -51,7 +62,7 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None, cons
         traj_filename = f"tmp_opt_{noise}.traj"
 
         # Optimize the geometry
-        mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index)
+        mol_opt_ase = rdkit2ase(mol_rdkit, conformation_index, charge, uhf)
         if constraints is not None:
             for constraint in constraints:
                 mol_opt_ase.set_constraint(constraint)
