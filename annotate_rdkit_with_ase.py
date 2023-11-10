@@ -45,6 +45,18 @@ def annotate_atom_property(property_name, property_function, ase_calculator, mol
     for atom, property_value in zip(mol_rdkit.GetAtoms(), property_values):
         atom.SetDoubleProp(property_name, property_value)
 
+def overwrite_conformer(mol_rdkit, conformation_index, mol_ase):
+    '''Overwrite a given conformer of an RDKit molecule with the positions from
+    an ASE molecule'''
+    positions = mol_ase.get_positions()
+    target_conformer = mol_rdkit.GetConformer(conformation_index)
+    for i, row in enumerate(positions):
+        x = row[0]
+        y = row[1]
+        z = row[2]
+        rdkit_point = Point3D(x, y, z)
+        target_conformer.SetAtomPosition(i, rdkit_point)
+
 def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None, constraints = None, charge = 0, uhf = 0):
     '''Given an ASE calculator and an RDKit molecule, optimize the geometry
     using that calculator'''
@@ -72,14 +84,7 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None, cons
         os.remove(traj_filename)
 
         # Set the optimized geometry as the conformer
-        positions = mol_opt_ase.get_positions()
-        target_conformer = mol_rdkit.GetConformer(conformation_index)
-        for i, row in enumerate(positions):
-            x = row[0]
-            y = row[1]
-            z = row[2]
-            rdkit_point = Point3D(x, y, z)
-            target_conformer.SetAtomPosition(i, rdkit_point)
+        overwrite_conformer(mol_rdkit, conformation_index, mol_opt_ase)
     
     else:
         raise ValueError("Failed to generate conformation")
