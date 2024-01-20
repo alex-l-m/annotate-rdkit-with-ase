@@ -64,7 +64,11 @@ def optimize_geometry(ase_calculator, mol_rdkit, conformation_index = None, cons
     if conformation_index is None:
         # Generate initial conformer
         mol_rdkit.RemoveAllConformers()
-        conformation_index = EmbedMolecule(mol_rdkit)
+        # Added ignoreSmoothingFailures so I could generate geometries for the
+        # boron subpc paper, https://doi.org/10.1021/acs.jcim.1c01048
+        # Inspired by the settings from here:
+        # https://sourceforge.net/p/rdkit/mailman/rdkit-discuss/thread/C761AFBF8DEB604DB8D72CB1B301A1EB21C651DB%40MBX07.ad.oak.ox.ac.uk/#msg32082674
+        conformation_index = EmbedMolecule(mol_rdkit, ignoreSmoothingFailures=True)
 
     if conformation_index != -1:
         # Create a random sequence of characters for the temp files. This way, jobs
